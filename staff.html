@@ -35,7 +35,7 @@ function loginView(msg) {
 async function load() {
   app.innerHTML = '<h1>스태프 전용</h1><p class="lede">불러오는 중…</p>';
   var r = await sb.from("messages").select("*").order("created_at", { ascending: true });
-  if (r.error) { loginView("불러오지 못했어요. 다시 로그인해 주세요."); return; }
+  if (r.error) { loginView("불러오지 못했어요: " + (r.error.message || r.error.code || "알 수 없는 오류")); return; }
   var rows = r.data, paths = rows.filter(function (m) { return m.audio_path; }).map(function (m) { return m.audio_path; });
   var urls = {};
   if (paths.length) {
