@@ -18,10 +18,10 @@ var C = window.CONFIG;
 var sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
 var app = document.getElementById("app");
 var n = parseInt(new URLSearchParams(location.search).get("a"), 10);
-var name = C.ACTORS[n - 1];
+var actorName = C.ACTORS[n - 1];
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
-if (!name) {
+if (!actorName) {
   app.innerHTML = '<span class="stamp">연극 〈' + esc(C.PLAY) + '〉</span><h1><span class="bulb"></span>배우에게 한마디</h1>' +
     '<p class="lede">누구에게 말을 건네고 싶으세요?</p><section class="card"><ul class="actors">' +
     C.ACTORS.map(function (a, i) { return '<li><a href="?a=' + (i + 1) + '">' + esc(a) + '</a></li>'; }).join("") + '</ul></section>';
@@ -32,7 +32,7 @@ if (!name) {
 function start() {
   app.innerHTML =
     '<span class="stamp">TO</span>' +
-    '<h1><span class="bulb"></span>' + esc(name) + ' 배우님께</h1>' +
+    '<h1><span class="bulb"></span>' + esc(actorName) + ' 배우님께</h1>' +
     '<p class="lede">〈' + esc(C.PLAY) + '〉을 보러 와주셔서 고맙습니다. 하고 싶은 말을 남겨주세요.</p>' +
     '<section class="card" id="box">' +
     '<label for="txt">글로 남기기</label>' +
@@ -40,10 +40,10 @@ function start() {
     '<label>목소리로 남기기 (최대 ' + C.MAX_SECONDS + '초)</label>' +
     '<div class="row"><button type="button" id="recbtn">녹음 시작</button><span class="timer" id="timer"></span></div>' +
     '<audio id="prev" controls hidden></audio>' +
-    '<p class="note" id="recnote">첫마디는 &quot;' + esc(name) + ' 배우님께&quot;로 시작해 보세요.</p>' +
+    '<p class="note" id="recnote">첫마디는 &quot;' + esc(actorName) + ' 배우님께&quot;로 시작해 보세요.</p>' +
     '<div class="row"><button type="button" id="send">보내기</button></div>' +
     '<p class="status" id="st" role="status"></p>' +
-    '<p class="note">보낸 메시지는 ' + esc(name) + ' 배우님만 마지막 공연 날 받아봅니다. 다른 관객은 들을 수 없습니다. 이 페이지 뒤에는 서버 하나와 스태프 몇 명이 있습니다. 공연 홍보에 사용될 수 있고, 마지막 공연 후 삭제됩니다.</p>' +
+    '<p class="note">보낸 메시지는 ' + esc(actorName) + ' 배우님만 마지막 공연 날 받아봅니다. 다른 관객은 들을 수 없습니다. 이 페이지 뒤에는 서버 하나와 스태프 몇 명이 있습니다. 공연 홍보에 사용될 수 있고, 마지막 공연 후 삭제됩니다.</p>' +
     '</section>';
 
   var st = document.getElementById("st"), recbtn = document.getElementById("recbtn"), timer = document.getElementById("timer");
@@ -103,8 +103,8 @@ function start() {
       }
       var ins = await sb.from("messages").insert({ actor: n, body: text || null, audio_path: path });
       if (ins.error) throw ins.error;
-      document.getElementById("box").innerHTML = '<h2>전달됐어요</h2><p>' + esc(name) + ' 배우님께 마음이 닿을 거예요. 고맙습니다.</p>' +
-        '<p class="note">다른 배우에게도 남기고 싶다면 <a href="index.html">캐스팅 보드</a>로 돌아가세요.</p>';
+      document.getElementById("box").innerHTML = '<h2>전달됐어요</h2><p>' + esc(actorName) + ' 배우님께 마음이 닿을 거예요. 고맙습니다.</p>' +
+        '<p class="note">다른 배우에게도 말을 건네고 싶다면 <a href="index.html">다른 배우에게도 한마디 남기기</a></p>';
     } catch (e) {
       say("보내지 못했어요. 통신 상태를 확인하고 다시 눌러주세요.", true);
       send.disabled = false; recbtn.disabled = !canRec;
