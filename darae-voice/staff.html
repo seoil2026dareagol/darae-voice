@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>스태프 전용</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app"></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="config.js"></script>
+<script>
+var C = window.CONFIG;
+var sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
+var app = document.getElementById("app");
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function fmt(t) { var d = new Date(t); return (d.getMonth() + 1) + "/" + d.getDate() + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+
+function loginView(msg) {
+  app.innerHTML = '<h1>스태프 전용</h1><form class="card" id="lf">' +
+    '<label for="em">이메일</label><input id="em" type="email" autocomplete="username" required>' +
+    '<label for="pw">비밀번호</label><input id="pw" type="password" autocomplete="current-password" required>' +
+    '<div class="row"><button type="submit">로그인</button></div><p class="status err" id="st">' + esc(msg || "") + '</p></form>';
+  document.getElementById("lf").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var r = await sb.auth.signInWithPassword({ email: document.getElementById("em").value, password: document.getElementById("pw").value });
+    if (r.error) loginView("로그인하지 못했어요. 이메일과 비밀번호를 확인해 주세요."); else load();
+  });
+}
+
+async function load() {
+  app.innerHTML = '<h1>스태프 전용</h1><p class="lede">불러오는 중…</p>';
+  var r = await sb.from("messages").select("*").order("created_at", { ascending: true });
+  if (r.error) { loginView("불러오지 못했어요. 다시 로그인해 주세요."); return; }
+  var rows = r.data, paths = rows.filter(function (m) { return m.audio_path; }).map(function (m) { return m.audio_path; });
+  var urls = {};
+  if (paths.length) {
+    var s = await sb.storage.from("voices").createSignedUrls(paths, 3600);
+    (s.data || []).forEach(function (x) { if (x.signedUrl) urls[x.path] = x.signedUrl; });
+  }
+  var by = {};
+  rows.forEach(function (m) { (by[m.actor] = by[m.actor] || []).push(m); });
+  var html = '<h1>스태프 전용</h1><p class="lede">전체 ' + rows.length + '건. 부적절한 메시지는 삭제하고, 마지막 공연 날 배우별 묶음을 내려받아 전달하세요.</p>' +
+    '<div class="row"><button id="logout" type="button">로그아웃</button><button id="reload" type="button">새로고침</button></div>';
+  C.ACTORS.forEach(function (a, i) {
+    var list = by[i + 1] || [];
+    html += '<details' + (list.length ? '' : ' style="opacity:.6"') + '><summary>' + esc(a) + ' (' + list.length + ')</summary>';
+    if (list.length) html += '<div class="row" style="margin-top:8px"><button type="button" data-zip="' + (i + 1) + '">묶음 내려받기</button></div>';
+    list.forEach(function (m) {
+      html += '<div class="msg"><div class="meta">' + fmt(m.created_at) + '</div>' +
+        (m.body ? '<p class="txt">' + esc(m.body) + '</p>' : '') +
+        (m.audio_path ? (urls[m.audio_path] ? '<audio controls preload="none" src="' + esc(urls[m.audio_path]) + '"></audio>' : '<p class="note">음성을 불러오지 못했어요.</p>') : '') +
+        '<div class="row"><button type="button" data-del="' + esc(m.id) + '" data-path="' + esc(m.audio_path || "") + '">삭제</button></div></div>';
+    });
+    html += '</details>';
+  });
+  app.innerHTML = html;
+  var open = document.querySelectorAll("details");
+  document.getElementById("logout").onclick = async function () { await sb.auth.signOut(); loginView(); };
+  document.getElementById("reload").onclick = load;
+  app.onclick = async function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.del) {
+      if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "정말 삭제? 한 번 더"; return; }
+      b.disabled = true;
+      if (b.dataset.path) await sb.storage.from("voices").remove([b.dataset.path]);
+      var d = await sb.from("messages").delete().eq("id", b.dataset.del);
+      if (d.error) { b.disabled = false; b.textContent = "삭제 실패"; return; }
+      load();
+    } else if (b.dataset.zip) {
+      zip(parseInt(b.dataset.zip, 10), by[b.dataset.zip] || [], urls, b);
+    }
+  };
+}
+
+async function zip(n, list, urls, btn) {
+  btn.disabled = true; btn.textContent = "만드는 중…";
+  try {
+    var z = new JSZip(), txt = "〈" + C.PLAY + "〉 " + C.ACTORS[n - 1] + " 배우님께 온 메시지\n\n", k = 0;
+    for (var i = 0; i < list.length; i++) {
+      var m = list[i], num = String(i + 1).padStart(2, "0");
+      txt += "[" + num + "] " + fmt(m.created_at) + "\n" + (m.body ? m.body + "\n" : "") + (m.audio_path ? "(음성: " + num + "_음성." + m.audio_path.split(".").pop() + ")\n" : "") + "\n";
+      if (m.audio_path && urls[m.audio_path]) {
+        var res = await fetch(urls[m.audio_path]);
+        z.file(num + "_음성." + m.audio_path.split(".").pop(), await res.blob());
+        k++;
+      }
+    }
+    z.file("메시지.txt", txt);
+    var out = await z.generateAsync({ type: "blob" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(out); a.download = String(n).padStart(2, "0") + "_" + C.ACTORS[n - 1] + ".zip";
+    document.body.appendChild(a); a.click(); a.remove();
+    btn.textContent = "내려받기 완료";
+  } catch (e) { btn.textContent = "실패. 새로고침 후 다시"; }
+  btn.disabled = false;
+}
+
+sb.auth.getSession().then(function (r) { if (r.data && r.data.session) load(); else loginView(); });
+</script>
+</body>
+</html>
