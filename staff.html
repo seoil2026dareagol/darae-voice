@@ -83,7 +83,7 @@ async function load() {
 async function zip(n, list, urls, btn) {
   btn.disabled = true; btn.textContent = "만드는 중…";
   try {
-    var z = new JSZip(), txt = "〈" + C.PLAY + "〉 " + C.ACTORS[n - 1] + " 배우님께 온 메시지\n\n", k = 0;
+    var z = new JSZip(), txt = "〈" + C.PLAY + "〉 " + C.ACTORS[n - 1] + (C.ACTORS[n - 1] === "강채원" ? " 연출님께" : " 배우님께") + " 온 메시지\n\n", k = 0;
     for (var i = 0; i < list.length; i++) {
       var m = list[i], num = String(i + 1).padStart(2, "0");
       txt += "[" + num + "] " + fmt(m.created_at) + "\n" + (m.body ? m.body + "\n" : "") + (m.audio_path ? "(음성: " + num + "_음성." + m.audio_path.split(".").pop() + ")\n" : "") + "\n";

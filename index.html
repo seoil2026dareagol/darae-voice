@@ -21,6 +21,8 @@ var n = parseInt(new URLSearchParams(location.search).get("a"), 10);
 var actorName = C.ACTORS[n - 1];
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
+var TITLES = { "강채원": "연출님" };
+function honor(n) { return TITLES[n] || "배우님"; }
 function footer() {
   return '<div class="foot"><span><b>원작</b> 손턴 와일더 · <b>연출</b> 강채원 · <b>지도교수</b> 문경태</span>' +
     '<span>2026.11.24~11.28 · 서일대학교 예다움홀</span></div>';
@@ -42,7 +44,7 @@ if (!actorName) {
 function start() {
   app.innerHTML =
     '<span class="stamp">TO</span>' +
-    '<h1>' + esc(actorName) + ' <span class="nw">배우님께</span></h1>' +
+    '<h1>' + esc(actorName) + ' <span class="nw">' + honor(actorName) + '께</span></h1>' +
     '<p class="lede">〈' + esc(C.PLAY) + '〉을 보러 와주셔서 감사합니다. 당신의 소중한 마음을 전해주세요.</p>' +
     '<section class="card" id="box">' +
     '<label for="txt">글로 남기기</label>' +
@@ -53,7 +55,7 @@ function start() {
     '<p class="note" id="recnote" hidden></p>' +
     '<div class="row"><button type="button" id="send">보내기</button></div>' +
     '<p class="status" id="st" role="status"></p>' +
-    '<p class="note">보내신 메시지는 ' + esc(actorName) + ' 배우님에게 공연 종료 후 전달됩니다. 다른 관객은 들을 수 없습니다.</p>' +
+    '<p class="note">보내신 메시지는 ' + esc(actorName) + ' ' + honor(actorName) + '에게 공연 종료 후 전달됩니다. 다른 관객은 들을 수 없습니다.</p>' +
     '</section>';
 
   var st = document.getElementById("st"), recbtn = document.getElementById("recbtn"), timer = document.getElementById("timer");
@@ -114,7 +116,7 @@ function start() {
       }
       var ins = await sb.from("messages").insert({ actor: n, body: text || null, audio_path: path });
       if (ins.error) throw ins.error;
-      document.getElementById("box").innerHTML = '<h2>전달됐어요</h2><p>' + esc(actorName) + ' 배우님께 마음이 닿을 거예요. 고맙습니다.</p>' +
+      document.getElementById("box").innerHTML = '<h2>전달됐어요</h2><p>' + esc(actorName) + ' ' + honor(actorName) + '께 마음이 닿을 거예요. 고맙습니다.</p>' +
         '<p class="note">다른 배우에게도 말을 건네고 싶다면 <a href="index.html">다른 배우에게도 한마디 남기기</a></p>';
     } catch (e) {
       say("보내지 못했어요. 통신 상태를 확인하고 다시 눌러주세요.", true);

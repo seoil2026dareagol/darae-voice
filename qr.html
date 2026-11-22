@@ -32,7 +32,7 @@ C.ACTORS.map(function (a, i) { return { a: a, no: i + 1 }; })
   var a = it.a, url = C.SITE_URL + "/index.html?a=" + it.no;
   var d = document.createElement("div"); d.className = "qr";
   var code = document.createElement("div"); code.className = "code";
-  var b = document.createElement("b"); b.textContent = a + " 배우님께";
+  var b = document.createElement("b"); b.textContent = a + (a === "강채원" ? " 연출님께" : " 배우님께");
   var s = document.createElement("small"); s.textContent = "한마디 남기기";
   d.appendChild(code); d.appendChild(b); d.appendChild(s); g.appendChild(d);
   new QRCode(code, { text: url, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M });
