@@ -6,7 +6,7 @@
 <title>배우에게 한마디</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=East+Sea+Dokdo&family=Gowun+Dodum&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,10 +21,21 @@ var n = parseInt(new URLSearchParams(location.search).get("a"), 10);
 var actorName = C.ACTORS[n - 1];
 function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
+function footer() {
+  return '<div class="foot"><span><b>원작</b> 손턴 와일더 · <b>연출</b> 강채원 · <b>지도교수</b> 문경태</span>' +
+    '<span>2026.11.24~11.28 · 서일대학교 예다움홀</span></div>';
+}
+
 if (!actorName) {
-  app.innerHTML = '<span class="stamp">연극 〈' + esc(C.PLAY) + '〉</span><h1><span class="bulb"></span>배우에게 한마디</h1>' +
-    '<p class="lede">누구에게 말을 건네고 싶으세요?</p><section class="card"><ul class="actors">' +
-    C.ACTORS.map(function (a, i) { return '<li><a href="?a=' + (i + 1) + '">' + esc(a) + '</a></li>'; }).join("") + '</ul></section>';
+  var sorted = C.ACTORS.map(function (a, i) { return { name: a, no: i + 1 }; })
+    .sort(function (x, y) { return x.name.localeCompare(y.name, "ko"); });
+  app.innerHTML =
+    '<img class="art" src="poster-art.jpg" alt="" width="560" height="631">' +
+    '<span class="stamp">연극</span>' +
+    '<h1>배우에게<br><span class="hot">한마디</span></h1>' +
+    '<p class="lede">〈' + esc(C.PLAY) + '〉의 배우에게 하고 싶은 말을 남겨주세요. 누구에게 건네고 싶으세요?</p>' +
+    '<section class="card"><ul class="actors">' +
+    sorted.map(function (a) { return '<li><a href="?a=' + a.no + '">' + esc(a.name) + '</a></li>'; }).join("") + '</ul></section>' + footer();
 } else {
   start();
 }
@@ -32,7 +43,7 @@ if (!actorName) {
 function start() {
   app.innerHTML =
     '<span class="stamp">TO</span>' +
-    '<h1><span class="bulb"></span>' + esc(actorName) + ' 배우님께</h1>' +
+    '<h1><span class="hot">' + esc(actorName) + '</span> <span class="nw">배우님께</span></h1>' +
     '<p class="lede">〈' + esc(C.PLAY) + '〉을 보러 와주셔서 고맙습니다. 하고 싶은 말을 남겨주세요.</p>' +
     '<section class="card" id="box">' +
     '<label for="txt">글로 남기기</label>' +
