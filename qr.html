@@ -12,6 +12,12 @@
     -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   h1 { font-family: "East Sea Dokdo", cursive; font-weight: 400; font-size: 2.4rem; margin: 0 0 4px; color: #531206; }
   p.hint { margin: 0 0 18px; font-size: .85rem; color: #6b5548; }
+  h2 { font-family: "East Sea Dokdo", cursive; font-weight: 400; font-size: 1.8rem; margin: 26px 0 10px; color: #531206; }
+  .all { display: flex; justify-content: center; }
+  .all .qr { width: 300px; padding: 26px 20px 20px; }
+  .all .qr b { font-size: 2.6rem; }
+  .all .qr .code svg { width: 230px; height: 230px; }
+  .all .qr + .qr { margin-left: 16px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
   .qr { background: #f6f1ea; border: 1px solid #c9bcae; padding: 18px 14px 14px; text-align: center; break-inside: avoid;
     display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -20,12 +26,14 @@
   .qr .code { padding: 0; background: #f6f1ea; line-height: 0; margin: 4px 0; }
   .qr .code svg { display: block; width: 150px; height: 150px; }
   .qr small { font-size: .78rem; color: #a80808; }
-  @media print { body { background: #fff; padding: 0; } h1, p.hint { display: none; } .grid { gap: 10px; } }
+  @media print { h2 { display: none; } body { background: #fff; padding: 0; } h1, p.hint { display: none; } .grid { gap: 10px; } }
 </style>
 </head>
 <body>
 <h1>배우에게 한마디 QR</h1>
 <p class="hint">브라우저의 인쇄(Ctrl+P / ⌘P)로 뽑거나 화면을 캡처해 쓰세요. 인쇄할 때는 "배경 그래픽"을 켜 주세요. 각 카드를 잘라 캐스팅보드의 배우 사진 옆에 붙입니다.</p>
+<div class="all" id="all"></div>
+<h2>배우별 QR</h2>
 <div class="grid" id="g"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="config.js"></script>
@@ -50,6 +58,11 @@ function qrSvg(text) {
     '<rect width="' + size + '" height="' + size + '" fill="#f6f1ea"/>' + out + '</svg>';
 }
 
+(function () {
+  var d = document.createElement("div"); d.className = "qr";
+  d.innerHTML = '<span class="play">〈' + C.PLAY + '〉</span><b>배우에게 한마디</b><div class="code">' + qrSvg(C.SITE_URL + "/") + '</div><small>QR을 찍고 전하고 싶은 배우를 골라주세요</small>';
+  document.getElementById("all").appendChild(d);
+})();
 C.ACTORS.map(function (a, i) { return { a: a, no: i + 1 }; })
   .sort(function (x, y) { return x.a.localeCompare(y.a, "ko"); })
   .forEach(function (it) {
