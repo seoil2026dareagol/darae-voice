@@ -28,10 +28,9 @@ p { margin: 0; }
 .note { font-size: .85rem; color: var(--soft); line-height: 1.55; }
 
 /* 포스터 일러스트: 종이색과 곱해서 바탕에 스며들게 한다 */
-.art { display: block; width: min(300px, 78%); height: auto; mix-blend-mode: multiply; margin: 0 0 -6px -18px;
-  -webkit-mask-image: linear-gradient(to right, #000 72%, transparent), linear-gradient(to bottom, #000 78%, transparent);
-  mask-image: linear-gradient(to right, #000 72%, transparent), linear-gradient(to bottom, #000 78%, transparent);
-  -webkit-mask-composite: source-in; mask-composite: intersect; }
+.art { display: block; width: calc(100% + 36px); max-width: none; height: auto; margin: -20px -18px -4px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 74%, transparent);
+  mask-image: linear-gradient(to bottom, #000 74%, transparent); }
 h1 .nw { white-space: nowrap; }
 .credit { font-size: .85rem; color: var(--ink); display: flex; flex-wrap: wrap; gap: 2px 14px; }
 .credit b { font-weight: 400; color: var(--maroon); }

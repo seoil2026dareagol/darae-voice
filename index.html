@@ -30,8 +30,7 @@ if (!actorName) {
   var sorted = C.ACTORS.map(function (a, i) { return { name: a, no: i + 1 }; })
     .sort(function (x, y) { return x.name.localeCompare(y.name, "ko"); });
   app.innerHTML =
-    '<img class="art" src="poster-art.jpg" alt="" width="560" height="631">' +
-    '<span class="stamp">연극</span>' +
+    '<img class="art" src="poster-art.jpg" alt="" width="1100" height="619">' +
     '<h1>배우에게<br><span class="hot">한마디</span></h1>' +
     '<p class="lede">〈' + esc(C.PLAY) + '〉의 배우에게 하고 싶은 말을 남겨주세요. 누구에게 건네고 싶으세요?</p>' +
     '<section class="card"><ul class="actors">' +
@@ -43,18 +42,18 @@ if (!actorName) {
 function start() {
   app.innerHTML =
     '<span class="stamp">TO</span>' +
-    '<h1><span class="hot">' + esc(actorName) + '</span> <span class="nw">배우님께</span></h1>' +
-    '<p class="lede">〈' + esc(C.PLAY) + '〉을 보러 와주셔서 고맙습니다. 하고 싶은 말을 남겨주세요.</p>' +
+    '<h1>' + esc(actorName) + ' <span class="nw">배우님께</span></h1>' +
+    '<p class="lede">〈' + esc(C.PLAY) + '〉을 보러 와주셔서 감사합니다. 당신의 소중한 마음을 전해주세요.</p>' +
     '<section class="card" id="box">' +
     '<label for="txt">글로 남기기</label>' +
     '<textarea id="txt" maxlength="500" placeholder="그 장면이 오래 남았어요…"></textarea>' +
     '<label>목소리로 남기기 (최대 ' + C.MAX_SECONDS + '초)</label>' +
     '<div class="row"><button type="button" id="recbtn">녹음 시작</button><span class="timer" id="timer"></span></div>' +
     '<audio id="prev" controls hidden></audio>' +
-    '<p class="note" id="recnote">첫마디는 &quot;' + esc(actorName) + ' 배우님께&quot;로 시작해 보세요.</p>' +
+    '<p class="note" id="recnote" hidden></p>' +
     '<div class="row"><button type="button" id="send">보내기</button></div>' +
     '<p class="status" id="st" role="status"></p>' +
-    '<p class="note">보낸 메시지는 ' + esc(actorName) + ' 배우님만 마지막 공연 날 받아봅니다. 다른 관객은 들을 수 없습니다. 이 페이지 뒤에는 서버 하나와 스태프 몇 명이 있습니다. 공연 홍보에 사용될 수 있고, 마지막 공연 후 삭제됩니다.</p>' +
+    '<p class="note">보내신 메시지는 ' + esc(actorName) + ' 배우님에게 공연 종료 후 전달됩니다. 다른 관객은 들을 수 없습니다.</p>' +
     '</section>';
 
   var st = document.getElementById("st"), recbtn = document.getElementById("recbtn"), timer = document.getElementById("timer");
@@ -65,7 +64,8 @@ function start() {
   var canRec = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
   if (!canRec) {
     recbtn.disabled = true;
-    document.getElementById("recnote").textContent = "이 브라우저에서는 녹음이 안 돼요. 카카오톡 등 앱 안에서 열었다면 휴대폰 기본 브라우저(사파리, 크롬)로 열어주세요. 글은 그대로 보낼 수 있어요.";
+    var rn = document.getElementById("recnote"); rn.hidden = false;
+    rn.textContent = "이 브라우저에서는 녹음이 안 돼요. 카카오톡 등 앱 안에서 열었다면 휴대폰 기본 브라우저(사파리, 크롬)로 열어주세요. 글은 그대로 보낼 수 있어요.";
   }
   function pickMime() {
     var c = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm", "audio/ogg"];
