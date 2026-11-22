@@ -42,10 +42,36 @@ async function load() {
     var s = await sb.storage.from("voices").createSignedUrls(paths, 3600);
     (s.data || []).forEach(function (x) { if (x.signedUrl) urls[x.path] = x.signedUrl; });
   }
+  var rel = null, toks = null, relErr = false;
+  var sr = await sb.from("settings").select("*").eq("key", "released").maybeSingle();
+  if (sr.error) relErr = true; else rel = !!(sr.data && sr.data.value === "true");
+  var tr = await sb.from("inbox_tokens").select("*");
+  if (tr.error) relErr = true; else { toks = {}; (tr.data || []).forEach(function (x) { toks[x.actor] = x.token; }); }
   var by = {};
   rows.forEach(function (m) { (by[m.actor] = by[m.actor] || []).push(m); });
   var html = '<h1>스태프 전용</h1><p class="lede">전체 ' + rows.length + '건. 부적절한 메시지는 삭제하고, 마지막 공연 날 배우별 묶음을 내려받아 전달하세요.</p>' +
     '<div class="row"><button id="logout" type="button">로그아웃</button><button id="reload" type="button">새로고침</button></div>';
+  html += '<section class="card" id="release"><h2>배우에게 공개</h2>';
+  if (relErr) {
+    html += '<p class="note">이 기능을 쓰려면 Supabase SQL Editor에서 release.sql을 한 번 실행해야 해요.</p>';
+  } else {
+    html += '<p>지금은 <b>' + (rel ? '열림' : '닫힘') + '</b> 상태예요. ' +
+      (rel ? '배우가 자기 전용 주소로 들어오면 받은 메시지를 볼 수 있어요.' : '배우가 자기 전용 주소로 들어와도 아직 메시지가 보이지 않아요. 마지막 공연이 끝난 뒤 열어 주세요.') + '</p>' +
+      '<div class="row"><button type="button" id="togglerel" data-next="' + (rel ? "false" : "true") + '">' + (rel ? '다시 닫기' : '배우에게 공개하기') + '</button></div>';
+  }
+  html += '</section>';
+  if (toks) {
+    html += '<details><summary>배우 전용 주소 (' + C.ACTORS.length + ')</summary><p class="note" style="margin-top:8px">각 배우에게 자기 주소만 개인 메시지로 보내 주세요. 주소를 아는 사람은 공개 후 그 배우의 메시지를 볼 수 있어요.</p>';
+    C.ACTORS.map(function (a, i) { return { a: a, no: i + 1 }; })
+      .sort(function (x, y) { return x.a.localeCompare(y.a, "ko"); })
+      .forEach(function (it) {
+        var url = C.SITE_URL + "/inbox.html?t=" + (toks[it.no] || "");
+        html += '<div class="msg"><b>' + esc(it.a) + '</b>' + (toks[it.no]
+          ? '<div class="row"><input type="text" readonly value="' + esc(url) + '" style="flex:1;min-width:0;font-size:.8rem"><button type="button" data-copy="' + esc(url) + '">복사</button></div>'
+          : '<p class="note">코드가 없어요. release.sql을 다시 실행해 주세요.</p>') + '</div>';
+      });
+    html += '</details>';
+  }
   C.ACTORS.map(function (a, i) { return { a: a, no: i + 1 }; })
     .sort(function (x, y) { return x.a.localeCompare(y.a, "ko"); })
     .forEach(function (it) {
@@ -54,7 +80,7 @@ async function load() {
     html += '<details' + (list.length ? '' : ' style="opacity:.6"') + '><summary>' + esc(a) + ' (' + list.length + ')</summary>';
     if (list.length) html += '<div class="row" style="margin-top:8px"><button type="button" data-zip="' + (i + 1) + '">묶음 내려받기</button></div>';
     list.forEach(function (m) {
-      html += '<div class="msg"><div class="meta">' + fmt(m.created_at) + '</div>' +
+      html += '<div class="msg"><div class="meta">' + (m.sender ? 'From. ' + esc(m.sender) + ' · ' : '') + fmt(m.created_at) + '</div>' +
         (m.body ? '<p class="txt">' + esc(m.body) + '</p>' : '') +
         (m.audio_path ? (urls[m.audio_path] ? '<audio controls preload="none" src="' + esc(urls[m.audio_path]) + '"></audio>' : '<p class="note">음성을 불러오지 못했어요.</p>') : '') +
         '<div class="row"><button type="button" data-del="' + esc(m.id) + '" data-path="' + esc(m.audio_path || "") + '">삭제</button></div></div>';
@@ -67,7 +93,17 @@ async function load() {
   document.getElementById("reload").onclick = load;
   app.onclick = async function (e) {
     var b = e.target.closest("button"); if (!b) return;
-    if (b.dataset.del) {
+    if (b.id === "togglerel") {
+      if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = b.dataset.next === "true" ? "정말 공개? 한 번 더" : "정말 닫기? 한 번 더"; return; }
+      b.disabled = true;
+      var u = await sb.from("settings").update({ value: b.dataset.next }).eq("key", "released");
+      if (u.error) { b.disabled = false; b.textContent = "실패. 다시 시도"; return; }
+      load();
+    } else if (b.dataset.copy) {
+      var inp = b.previousElementSibling;
+      try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "복사됨"; }
+      catch (err) { if (inp) { inp.focus(); inp.select(); } b.textContent = "선택됨. 길게 눌러 복사"; }
+    } else if (b.dataset.del) {
       if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "정말 삭제? 한 번 더"; return; }
       b.disabled = true;
       if (b.dataset.path) await sb.storage.from("voices").remove([b.dataset.path]);
@@ -86,7 +122,7 @@ async function zip(n, list, urls, btn) {
     var z = new JSZip(), txt = "〈" + C.PLAY + "〉 " + C.ACTORS[n - 1] + (C.ACTORS[n - 1] === "강채원" ? " 연출님께" : " 배우님께") + " 온 메시지\n\n", k = 0;
     for (var i = 0; i < list.length; i++) {
       var m = list[i], num = String(i + 1).padStart(2, "0");
-      txt += "[" + num + "] " + fmt(m.created_at) + "\n" + (m.body ? m.body + "\n" : "") + (m.audio_path ? "(음성: " + num + "_음성." + m.audio_path.split(".").pop() + ")\n" : "") + "\n";
+      txt += "[" + num + "] " + (m.sender ? "From. " + m.sender + " · " : "") + fmt(m.created_at) + "\n" + (m.body ? m.body + "\n" : "") + (m.audio_path ? "(음성: " + num + "_음성." + m.audio_path.split(".").pop() + ")\n" : "") + "\n";
       if (m.audio_path && urls[m.audio_path]) {
         var res = await fetch(urls[m.audio_path]);
         z.file(num + "_음성." + m.audio_path.split(".").pop(), await res.blob());

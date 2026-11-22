@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>도착한 한마디</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=East+Sea+Dokdo&family=Gowun+Dodum&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app"></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+var C = window.CONFIG;
+var sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+var app = document.getElementById("app");
+var token = new URLSearchParams(location.search).get("t") || "";
+var TITLES = { "강채원": "연출님" };
+function honor(n) { return TITLES[n] || "배우님"; }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function fmt(t) { var d = new Date(t); return (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+function hero() { return '<img class="art" src="poster-art.jpg" alt="" width="1100" height="619">'; }
+function audioUrl(p) { return C.SUPABASE_URL + "/storage/v1/object/public/voices/" + p.split("/").map(encodeURIComponent).join("/"); }
+
+function bad() {
+  app.innerHTML = '<h1>주소를 확인해 주세요</h1>' +
+    '<p class="lede">이 주소로는 메시지를 찾을 수 없어요. 전달받은 주소가 끝까지 복사됐는지 확인해 주세요.</p>';
+}
+
+async function main() {
+  if (!token) { bad(); return; }
+  var r;
+  try { r = await sb.rpc("actor_inbox", { p_token: token }); } catch (e) { r = { error: e }; }
+  if (r.error) {
+    app.innerHTML = '<h1>불러오지 못했어요</h1><p class="lede">통신 상태를 확인하고 새로고침해 주세요.</p>';
+    return;
+  }
+  var d = r.data;
+  if (!d || !d.ok) { bad(); return; }
+  var name = C.ACTORS[d.actor - 1] || "";
+  var list = d.messages || [];
+  function head(sub) {
+    return '<section class="card inbox"><div class="ihead"><div class="play">〈' + esc(C.PLAY) + '〉</div>' +
+      '<div class="to">TO. ' + esc(name) + ' ' + honor(name) + '</div>' +
+      '<h2>당신을 향한 응원</h2>' + (sub ? '<div class="cnt">' + sub + '</div>' : '') + '</div>';
+  }
+
+  if (!d.released) {
+    app.innerHTML = head("") +
+      '<div class="ibody"><p><b>아직 공개 전이에요</b></p>' +
+      '<p>공연이 모두 끝나면 이 주소가 열려요. 마지막 공연 날 다시 열어 보세요.</p>' +
+      '<p class="note">이 주소를 잘 보관해 두세요. 다른 사람에게는 알려주지 마세요.</p></div></section>';
+    return;
+  }
+
+  if (!list.length) {
+    app.innerHTML = head("총 0개의 메시지") +
+      '<div class="ibody"><p>이번 공연에서는 남겨진 메시지가 없었어요. 무대 위에서 건넨 마음이 이미 닿았을 거예요.</p></div></section>';
+    return;
+  }
+  var html = head("총 " + list.length + "개의 메시지") + '<div class="ibody">';
+  list.forEach(function (m) {
+    html += '<div class="msg"><div class="meta">' + (m.sender ? 'From. ' + esc(m.sender) + ' · ' : '') + fmt(m.created_at) + '</div>' +
+      (m.body ? '<p class="txt">' + esc(m.body) + '</p>' : '') +
+      (m.audio_path ? '<audio controls preload="none" src="' + esc(audioUrl(m.audio_path)) + '"></audio>' : '') + '</div>';
+  });
+  html += '<p class="note">받은 메시지는 이 주소에서 계속 볼 수 있어요. 다른 사람에게는 알려주지 마세요.</p></div></section>';
+  app.innerHTML = html;
+  Array.prototype.forEach.call(document.querySelectorAll("audio"), function (a) {
+    a.addEventListener("error", function () {
+      if (a.nextElementSibling && a.nextElementSibling.className === "note") return;
+      a.insertAdjacentHTML("afterend", '<p class="note">이 기기에서는 음성을 재생할 수 없어요. 다른 브라우저로 열어 보거나 스태프에게 파일을 요청해 주세요.</p>');
+    });
+  });
+}
+main();
+</script>
+</body>
+</html>

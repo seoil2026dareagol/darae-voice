@@ -47,6 +47,8 @@ function start() {
     '<h1>' + esc(actorName) + ' <span class="nw">' + honor(actorName) + '께</span></h1>' +
     '<p class="lede">〈' + esc(C.PLAY) + '〉을 보러 와주셔서 감사합니다. 당신의 소중한 마음을 전해주세요.</p>' +
     '<section class="card" id="box">' +
+    '<label for="from">보내는 사람 (선택)</label>' +
+    '<input type="text" id="from" maxlength="30" placeholder="이름이나 별명, 비워두셔도 돼요" autocomplete="off">' +
     '<label for="txt">글로 남기기</label>' +
     '<textarea id="txt" maxlength="500" placeholder="그 장면이 오래 남았어요…"></textarea>' +
     '<label>목소리로 남기기 (최대 ' + C.MAX_SECONDS + '초)</label>' +
@@ -114,7 +116,7 @@ function start() {
         var up = await sb.storage.from("voices").upload(path, blob, { contentType: type });
         if (up.error) throw up.error;
       }
-      var ins = await sb.from("messages").insert({ actor: n, body: text || null, audio_path: path });
+      var ins = await sb.from("messages").insert({ actor: n, sender: (document.getElementById("from").value.trim() || null), body: text || null, audio_path: path });
       if (ins.error) throw ins.error;
       document.getElementById("box").innerHTML = '<h2>전달됐어요</h2><p>' + esc(actorName) + ' ' + honor(actorName) + '께 마음이 닿을 거예요. 고맙습니다.</p>' +
         '<p class="note">다른 배우에게도 말을 건네고 싶다면 <a href="index.html">다른 배우에게도 한마디 남기기</a></p>';
