@@ -43,7 +43,7 @@ h1 .nw { white-space: nowrap; }
 .card { background: var(--card); border: 1px solid var(--line); padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
 label { font-family: var(--brush); font-size: 1.55rem; color: var(--maroon); line-height: 1.1; }
-textarea, input[type=email], input[type=password] {
+textarea, input[type=email], input[type=password], input[type=text] {
   width: 100%; font: inherit; color: var(--ink); background: #f6f1ea;
   border: 1px solid var(--line); border-radius: 0; padding: 11px 12px;
 }
@@ -82,3 +82,18 @@ summary { cursor: pointer; font-family: var(--brush); font-size: 1.7rem; color: 
 
 .foot { margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--line); font-size: .82rem; color: var(--soft); display: flex; flex-direction: column; gap: 2px; }
 .foot b { font-weight: 400; color: var(--ink); }
+
+/* 배우 수신 화면: 가운데 정렬 머리말 + 구분선 아래 메시지 목록 */
+.card.inbox { padding: 0; gap: 0; border-radius: 18px; margin-top: 8px; }
+.ihead { text-align: center; padding: 30px 20px 22px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--line); margin: 0 18px; }
+.ihead .play { font-family: var(--brush); font-size: 2.4rem; color: var(--maroon); line-height: 1.1; }
+.ihead .to { color: var(--soft); font-size: .95rem; }
+.ihead h2 { font-size: 2.3rem; margin-top: 4px; }
+.ihead .cnt { color: var(--soft); font-size: .9rem; }
+.ibody { padding: 6px 20px 22px; display: flex; flex-direction: column; gap: 4px; }
+.ibody > p { padding-top: 10px; }
+.ibody .msg:last-of-type { border-bottom: 0; }
+.ibody .msg { padding: 22px 0; gap: 10px; }
+.ibody .msg .txt { line-height: 1.8; }
+.ibody .msg:first-child { padding-top: 24px; }
+.ibody .note { padding-top: 18px; }
