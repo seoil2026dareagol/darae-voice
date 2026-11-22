@@ -16,9 +16,9 @@
   .qr { background: #f6f1ea; border: 1px solid #c9bcae; padding: 18px 14px 14px; text-align: center; break-inside: avoid;
     display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .qr .play { font-size: .72rem; letter-spacing: .08em; color: #6b5548; }
-  .qr b { font-family: "East Sea Dokdo", cursive; font-weight: 400; font-size: 2.1rem; line-height: 1.1; color: #531206; }
-  .qr .code { padding: 8px; background: #f6f1ea; line-height: 0; margin: 4px 0; }
-  .qr .code img, .qr .code canvas { width: 140px !important; height: 140px !important; image-rendering: pixelated; }
+  .qr b { font-family: "East Sea Dokdo", cursive; font-weight: 400; font-size: 2rem; line-height: 1.1; color: #531206; white-space: nowrap; }
+  .qr .code { padding: 0; background: #f6f1ea; line-height: 0; margin: 4px 0; }
+  .qr .code svg { display: block; width: 150px; height: 150px; }
   .qr small { font-size: .78rem; color: #a80808; }
   @media print { body { background: #fff; padding: 0; } h1, p.hint { display: none; } .grid { gap: 10px; } }
 </style>
@@ -31,6 +31,25 @@
 <script src="config.js"></script>
 <script>
 var C = window.CONFIG, g = document.getElementById("g");
+function qrSvg(text) {
+  var tmp = document.createElement("div");
+  var q = new QRCode(tmp, { text: text, width: 10, height: 10, correctLevel: QRCode.CorrectLevel.M });
+  var m = q._oQRCode, n = m.getModuleCount(), Q = 2, size = n + Q * 2;
+  var INK = "#531206", RED = "#a80808", out = "";
+  function inFinder(r, c) { return (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7); }
+  for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) {
+    if (!m.isDark(r, c) || inFinder(r, c)) continue;
+    out += '<circle cx="' + (c + Q + .5) + '" cy="' + (r + Q + .5) + '" r=".44" fill="' + INK + '"/>';
+  }
+  [[0, 0], [0, n - 7], [n - 7, 0]].forEach(function (p) {
+    var x = p[1] + Q, y = p[0] + Q;
+    out += '<rect x="' + (x + .5) + '" y="' + (y + .5) + '" width="6" height="6" rx="1.9" fill="none" stroke="' + INK + '" stroke-width="1"/>' +
+           '<rect x="' + (x + 2) + '" y="' + (y + 2) + '" width="3" height="3" rx="1.1" fill="' + RED + '"/>';
+  });
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + ' ' + size + '" width="150" height="150" shape-rendering="geometricPrecision">' +
+    '<rect width="' + size + '" height="' + size + '" fill="#f6f1ea"/>' + out + '</svg>';
+}
+
 C.ACTORS.map(function (a, i) { return { a: a, no: i + 1 }; })
   .sort(function (x, y) { return x.a.localeCompare(y.a, "ko"); })
   .forEach(function (it) {
@@ -41,7 +60,7 @@ C.ACTORS.map(function (a, i) { return { a: a, no: i + 1 }; })
   var code = document.createElement("div"); code.className = "code";
   var s = document.createElement("small"); s.textContent = "QR을 찍고 한마디 남기기";
   d.appendChild(p); d.appendChild(b); d.appendChild(code); d.appendChild(s); g.appendChild(d);
-  new QRCode(code, { text: url, width: 280, height: 280, colorDark: "#531206", colorLight: "#f6f1ea", correctLevel: QRCode.CorrectLevel.M });
+  code.innerHTML = qrSvg(url);
 });
 </script>
 </body>
